@@ -8,7 +8,14 @@
           <!-- Username -->
           <div class="mb-3">
             <label class="form-label" for="username">Username</label>
-            <input id="username" type="text" class="form-control" v-model="formData.username" />
+            <input
+              id="username"
+              type="text"
+              class="form-control"
+              v-model="formData.username"
+              :class="{ 'is-invalid': errors.username }"
+            />
+            <div class="invalid-feedback">{{ errors.username }}</div>
           </div>
 
           <!-- Password -->
@@ -84,6 +91,12 @@
 <script setup>
 import { ref } from 'vue'
 
+const errors = ref({
+  username: '',
+  password: '',
+  gender: '',
+})
+
 const formData = ref({
   username: '',
   password: '',
@@ -95,16 +108,32 @@ const formData = ref({
 const submittedCards = ref([])
 
 const submitForm = () => {
-  submittedCards.value.push({ ...formData.value })
-}
-
-const clearForm = () => {
-  formData.value = {
+  errors.value = {
     username: '',
     password: '',
-    isAustralian: false,
-    reason: '',
     gender: '',
+  }
+
+  let isValid = true
+
+  if (!formData.value.username.trim()) {
+    errors.value.username = 'Username is required.'
+    isValid = false
+  }
+
+  if (!formData.value.password.trim()) {
+    errors.value.password = 'Password is required.'
+    isValid = false
+  }
+
+  if (!formData.value.gender) {
+    errors.value.gender = 'Please select a gender.'
+    isValid = false
+  }
+
+  if (isValid) {
+    submittedCards.value.push({ ...formData.value })
+    clearForm()
   }
 }
 </script>
