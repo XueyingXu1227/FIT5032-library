@@ -3,21 +3,35 @@
     <h1 class="text-center mb-4">User Information Form</h1>
 
     <form @submit.prevent="submitForm">
-      <!-- Username + Password -->
       <div class="row mb-3">
         <div class="col">
           <label for="username" class="form-label">Username</label>
-          <input type="text" class="form-control" id="username" v-model="formData.username" />
-          <div v-if="errors.username" class="text-danger mt-1">{{ errors.username }}</div>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            v-model="formData.username"
+            required
+          />
+          <div class="form-text">3–15 characters, letters/numbers/underscore only.</div>
+          <div class="invalid-feedback">Please enter a valid username.</div>
         </div>
+
         <div class="col">
           <label for="password" class="form-label">Password</label>
-          <input type="password" class="form-control" id="password" v-model="formData.password" />
-          <div v-if="errors.password" class="text-danger mt-1">{{ errors.password }}</div>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            minlength="4"
+            maxlength="10"
+            v-model="formData.password"
+          />
+          <div class="form-text">4–10 characters.</div>
+          <div class="invalid-feedback">Please enter a password (min 6 characters).</div>
         </div>
       </div>
 
-      <!-- Australian Resident -->
       <div class="form-check mb-3">
         <input
           type="checkbox"
@@ -28,22 +42,27 @@
         <label class="form-check-label" for="isAustralian">Australian Resident?</label>
       </div>
 
-      <!-- Gender -->
       <div class="mb-3">
         <label for="gender" class="form-label">Gender</label>
-        <select class="form-select" id="gender" v-model="formData.gender">
+        <select class="form-select" id="gender" v-model="formData.gender" required>
           <option value="" disabled>Select your gender</option>
           <option value="female">Female</option>
           <option value="male">Male</option>
           <option value="other">Other</option>
         </select>
-        <div v-if="errors.gender" class="text-danger mt-1">{{ errors.gender }}</div>
+        <div class="invalid-feedback">Please select a gender.</div>
       </div>
 
-      <!-- Reason -->
       <div class="mb-3">
         <label for="reason" class="form-label">Reason for Joining</label>
-        <textarea class="form-control" id="reason" rows="3" v-model="formData.reason"></textarea>
+        <textarea
+          class="form-control"
+          id="reason"
+          rows="3"
+          v-model="formData.reason"
+          maxlength="200"
+        ></textarea>
+        <div class="form-text">Optional, max 200 characters.</div>
       </div>
 
       <button type="submit" class="btn btn-primary me-2">Submit</button>
@@ -75,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const formData = ref({
   username: '',
@@ -85,36 +104,21 @@ const formData = ref({
   reason: '',
 })
 
-const errors = ref({
-  username: '',
-  password: '',
-  gender: '',
-})
-
 const submittedCards = ref([])
+const triedSubmit = ref(false)
 
-const submitForm = () => {
+const usernameOK = computed(() => /^[A-Za-z0-9_]{3,15}$/.test(formData.value.username))
+const passwordOK = computed(() => formData.value.password.trim().length >= 6)
+const genderOK = computed(() => !!formData.value.gender)
+
+const submitForm = (e) => {
+  const formEl = e.target
+  if (!formEl.checkValidity()) {
+    formEl.reportValidity()
+    return
+  }
   submittedCards.value.push({ ...formData.value })
-  /* errors.value = { username: '', password: '', gender: '' }
-  let isValid = true
-
-  if (!formData.value.username.trim()) {
-    errors.value.username = 'Username is required.'
-    isValid = false
-  }
-  if (!formData.value.password.trim()) {
-    errors.value.password = 'Password is required.'
-    isValid = false
-  }
-  if (!formData.value.gender) {
-    errors.value.gender = 'Please select a gender.'
-    isValid = false
-  }
-
-  if (isValid) {
-    submittedCards.value.push({ ...formData.value })
-    clearForm()
-  } */
+  clearForm()
 }
 
 const clearForm = () => {
@@ -125,7 +129,6 @@ const clearForm = () => {
     gender: '',
     reason: '',
   }
-  errors.value = { username: '', password: '', gender: '' }
 }
 </script>
 
@@ -137,7 +140,7 @@ const clearForm = () => {
 }
 .card-header {
   background-color: #275fda;
-  color: white;
+  color: #fff;
   padding: 10px;
   border-radius: 10px 10px 0 0;
 }
