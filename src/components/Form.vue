@@ -4,55 +4,52 @@
 
     <form @submit.prevent="submitForm">
       <div class="row mb-3">
-        <div class="col">
+        <div class="col-md-6 col-sm-6">
           <label for="username" class="form-label">Username</label>
           <input
             type="text"
             class="form-control"
             id="username"
+            @blur="() => validateName(true)"
+            @input="() => validateName(false)"
             v-model="formData.username"
-            required
           />
-          <div class="form-text">3–15 characters, letters/numbers/underscore only.</div>
-          <div class="invalid-feedback">Please enter a valid username.</div>
+          <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
         </div>
-
-        <div class="col">
+        <div class="col-md-6 col-sm-6">
           <label for="password" class="form-label">Password</label>
           <input
             type="password"
             class="form-control"
             id="password"
-            minlength="4"
-            maxlength="10"
+            @blur="() => validatePassword(true)"
+            @input="() => validatePassword(false)"
             v-model="formData.password"
           />
-          <div class="form-text">4–10 characters.</div>
-          <div class="invalid-feedback">Please enter a password (min 6 characters).</div>
+          <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
         </div>
       </div>
-
-      <div class="form-check mb-3">
-        <input
-          type="checkbox"
-          class="form-check-input"
-          id="isAustralian"
-          v-model="formData.isAustralian"
-        />
-        <label class="form-check-label" for="isAustralian">Australian Resident?</label>
+      <div class="row mb-3">
+        <div class="col-md-6 col-sm-6">
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="isAustralian"
+              v-model="formData.isAustralian"
+            />
+            <label class="form-check-label" for="isAustralian">Australian Resident?</label>
+          </div>
+        </div>
+        <div class="col-md-6 col-sm-6">
+          <label for="gender" class="form-label">Gender</label>
+          <select class="form-select" id="gender" v-model="formData.gender">
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </div>
-
-      <div class="mb-3">
-        <label for="gender" class="form-label">Gender</label>
-        <select class="form-select" id="gender" v-model="formData.gender" required>
-          <option value="" disabled>Select your gender</option>
-          <option value="female">Female</option>
-          <option value="male">Male</option>
-          <option value="other">Other</option>
-        </select>
-        <div class="invalid-feedback">Please select a gender.</div>
-      </div>
-
       <div class="mb-3">
         <label for="reason" class="form-label">Reason for Joining</label>
         <textarea
@@ -62,11 +59,11 @@
           v-model="formData.reason"
           maxlength="200"
         ></textarea>
-        <div class="form-text">Optional, max 200 characters.</div>
       </div>
-
-      <button type="submit" class="btn btn-primary me-2">Submit</button>
-      <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
+      <div>
+        <button type="submit" class="btn btn-primary me-2">Submit</button>
+        <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
+      </div>
     </form>
 
     <div class="row mt-5" v-if="submittedCards.length">
@@ -94,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 const formData = ref({
   username: '',
@@ -105,20 +102,14 @@ const formData = ref({
 })
 
 const submittedCards = ref([])
-const triedSubmit = ref(false)
 
-const usernameOK = computed(() => /^[A-Za-z0-9_]{3,15}$/.test(formData.value.username))
-const passwordOK = computed(() => formData.value.password.trim().length >= 6)
-const genderOK = computed(() => !!formData.value.gender)
-
-const submitForm = (e) => {
-  const formEl = e.target
-  if (!formEl.checkValidity()) {
-    formEl.reportValidity()
-    return
+const submitForm = () => {
+  validateName(true)
+  validatePassword(true)
+  if (!errors.value.username && !errors.value.password) {
+    submittedCards.value.push({ ...formData.value })
+    clearForm()
   }
-  submittedCards.value.push({ ...formData.value })
-  clearForm()
 }
 
 const clearForm = () => {
@@ -128,6 +119,43 @@ const clearForm = () => {
     isAustralian: false,
     gender: '',
     reason: '',
+  }
+}
+const errors = ref({
+  username: null,
+  password: null,
+  resident: null,
+  gender: null,
+  reason: null,
+})
+const validateName = (blur) => {
+  if (formData.value.username.length < 3) {
+    if (blur) errors.value.username = 'Name must be at least 3 characters'
+  } else {
+    errors.value.username = null
+  }
+}
+
+const validatePassword = (blur) => {
+  const password = formData.value.password
+  const minLength = 8
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /\d/.test(password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+
+  if (password.length < minLength) {
+    if (blur) errors.value.password = `Password must be at least ${minLength} characters long.`
+  } else if (!hasUppercase) {
+    if (blur) errors.value.password = 'Password must contain at least one uppercase letter.'
+  } else if (!hasLowercase) {
+    if (blur) errors.value.password = 'Password must contain at least one lowercase letter.'
+  } else if (!hasNumber) {
+    if (blur) errors.value.password = 'Password must contain at least one number.'
+  } else if (!hasSpecialChar) {
+    if (blur) errors.value.password = 'Password must contain at least one special character.'
+  } else {
+    errors.value.password = null
   }
 }
 </script>
